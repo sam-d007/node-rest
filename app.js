@@ -10,6 +10,7 @@ const config = require('./config')[env];
 
 const productRoutes = require('./api/routes/product');
 const orderRoutes = require('./api/routes/orders');
+const userRoutes = require('./api/routes/users');
 
 mongoose.connect(config.database.db,
     {
@@ -33,6 +34,7 @@ app.use((req, res, next) => {
 });
 app.use('/products', productRoutes);
 app.use('/orders', orderRoutes);
+app.use('/user', userRoutes);
 
 /*
 Custom error handler. next method is used to forward the request to another middleware which sends a json error
