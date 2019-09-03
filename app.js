@@ -16,7 +16,13 @@ mongoose.connect(config.database.db,
     {
         useNewUrlParser: true
     }
-);
+).catch(error => {
+    console.log("$$$$$$$", error);
+});
+
+// console.log("here");
+// console.log(mongoose.connection.readyState);    
+
 
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({ extended: false }));

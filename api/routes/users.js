@@ -2,11 +2,25 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const mongoose = require('mongoose');
-
+const jwt = require('jsonwebtoken');
+var env = process.env.NODE_ENV || 'development';
+const config = require('../../config')[env];
 
 const User = require('../models/users');
 
-router.post('/', (req, res, next) => {
+router.get('/', (req, res, next) => {
+    User.find()
+        .exec()
+        .then(result => {
+            res.status(200).json(result);
+        })
+        .catch(err => {
+            res.send(500).json(err)
+        })
+});
+console.log(mongoose.connection.readyState);    
+
+router.post('/signup', (req, res, next) => {
     const email = req.body.email;
     const password = req.body.password;
     console.log(email);
@@ -51,5 +65,55 @@ router.post('/', (req, res, next) => {
 
 
 });
+
+router.post('/login', (req, res, next) => {
+    User.find({ email: req.body.email })
+        .exec()
+        .then(user => {
+            if (user.length < 1) {
+                return res.status(401).json({ message: 'Not Authorized. Here' })
+            }
+            bcrypt.compare(req.body.password, user[0].password, (err, result) => {
+                if (err) {
+                    return res.status(401).json({ message: 'Not Authenticated!' });
+                }
+                if (result) {
+                    token = jwt.sign(
+                        {
+                            email: user[0].email,
+                            userId: user[0]._id
+                        },
+                        config.jwt_key,
+                        {
+                            expiresIn: '1h'
+                        }
+
+                    );
+                    return res.status(200).json(
+                        {
+                            message: 'Authenticated!',
+                            token: token
+                        });
+                }
+                return res.status(401).json({ message: err });
+                // return res.status(403).json({ message: 'Not Authorised. Idhar' });
+            });
+        })
+        .catch(err => {
+            res.status(403).json({ message: 'Not Authorized. Error' })
+        })
+});
+
+router.delete('/delete/:userEmail', (req, res, next) => {
+    User.remove({ email: req.params.userEmail })
+        .exec()
+        .then(result => {
+            res.status(200).json(result)
+        })
+        .catch(error => {
+            res.status(500).json(error)
+        })
+});
+
 
 module.exports = router;
